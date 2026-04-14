@@ -1,0 +1,124 @@
+# DCPP Python Docker Compose - Example Configuration
+#
+# Copy this file to docker-compose.yml and customize as needed.
+#
+# Quick start:
+#   cp docker-compose.example.yml docker-compose.yml
+#   docker-compose up -d content-seeder  # Seed test content first
+#   docker-compose up -d                 # Start nodes
+#
+# Environment variables (set in .env or export):
+#   DCPP_BOOTSTRAP_PEER_ID  - Peer ID of bootstrap node (for cross-impl testing)
+#   DCPP_BOOTSTRAP_ADDR     - Address of bootstrap node (e.g., /ip4/x.x.x.x/tcp/4001)
+
+name: dcpp-python
+
+networks:
+  dcpp-network:
+    name: dcpp-python-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/16
+
+volumes:
+  content-source:
+  python-node-1-data:
+  python-node-2-data:
+
+services:
+  python-node-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dcpp-python-py-1
+    hostname: python-node-1
+    networks:
+      dcpp-network:
+        ipv4_address: 172.31.2.1
+    ports:
+      - "5101:4001"   # libp2p / DCPP protocol
+      - "8183:8080"   # HTTP API
+    volumes:
+      - python-node-1-data:/data/dcpp
+      - content-source:/content:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DCPP_NODE_ID=python-node-1
+      - DCPP_STUB_MODE=0
+      # Customize these for your deployment:
+      # - DCPP_GOSSIPSUB_MODE=network
+      # - DCPP_PROBE_INTERVAL_SECONDS=60
+      # - DCPP_BOOTSTRAP_PEER_ID=<peer_id>
+      # - DCPP_BOOTSTRAP_ADDR=/ip4/x.x.x.x/tcp/4001
+    command: >
+      --listen /ip4/0.0.0.0/tcp/4001
+      --storage /data/dcpp
+      --collection <YOUR_COLLECTION_ID>
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  python-node-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dcpp-python-py-2
+    hostname: python-node-2
+    networks:
+      dcpp-network:
+        ipv4_address: 172.31.2.2
+    ports:
+      - "5102:4001"
+      - "8184:8080"
+    volumes:
+      - python-node-2-data:/data/dcpp
+      - content-source:/content:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DCPP_NODE_ID=python-node-2
+      - DCPP_STUB_MODE=0
+    command: >
+      --listen /ip4/0.0.0.0/tcp/4001
+      --storage /data/dcpp
+      --collection <YOUR_COLLECTION_ID>
+      --bootstrap /ip4/172.31.2.1/tcp/4001
+    depends_on:
+      python-node-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # Optional: Prometheus monitoring
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: dcpp-python-prometheus
+  #   networks:
+  #     dcpp-network:
+  #       ipv4_address: 172.31.4.1
+  #   ports:
+  #     - "9091:9090"
+  #   volumes:
+  #     - ./scripts/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  # Test content seeder - run once to populate test data
+  content-seeder:
+    image: alpine:latest
+    container_name: dcpp-python-content-seeder
+    volumes:
+      - content-source:/content
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      echo "Creating test content..."
+      mkdir -p /content/example-collection
+      echo '{"name":"Example","description":"Test content"}' > /content/example-collection/metadata.json
+      echo "Done."

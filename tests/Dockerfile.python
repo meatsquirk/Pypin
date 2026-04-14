@@ -1,0 +1,59 @@
+# DCPP Python Node Dockerfile (tests)
+#
+# Used by cross-network bootstrap tests when running from the dcpp-python repo.
+
+FROM python:3.11-slim-bookworm AS builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    libffi-dev \
+    libgmp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY src/ src/
+
+RUN pip install --no-cache-dir -e ".[dev,bittorrent]" aiohttp
+
+ENV CFLAGS="-I/usr/include" \
+    LDFLAGS="-L/usr/lib" \
+    LIBRARY_PATH="/usr/lib" \
+    C_INCLUDE_PATH="/usr/include"
+
+RUN pip install --no-cache-dir libp2p || echo "libp2p install failed (optional)"
+
+FROM python:3.11-slim-bookworm
+
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    libgmp10 \
+    libffi8 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app/src /app/src
+
+RUN mkdir -p /data/dcpp
+
+EXPOSE 4001
+EXPOSE 8080
+
+ENV PYTHONPATH=/app/src \
+    DCPP_LISTEN_ADDR=0.0.0.0:4001 \
+    DCPP_DATA_DIR=/data/dcpp \
+    DCPP_STUB_MODE=0 \
+    DCPP_BT_ALLOW_LOCAL=1
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -sf http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["python", "-m", "dcpp_python.daemon"]
+CMD ["--listen", "0.0.0.0:4001"]
