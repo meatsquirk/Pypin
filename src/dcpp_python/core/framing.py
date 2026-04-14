@@ -16,7 +16,7 @@ IMPORTANT: All production DCPP traffic MUST use the full envelope format
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import BinaryIO, cast
+from typing import Any, BinaryIO
 
 import cbor2
 
@@ -75,9 +75,9 @@ class Frame:
     payload: bytes
     request_id: int = 0
 
-    def decode_payload(self) -> dict[str, object]:
-        """Decode the CBOR payload to a dictionary."""
-        return cast(dict[str, object], cbor2.loads(self.payload))
+    def decode_payload(self) -> Any:
+        """Decode the CBOR payload from CBOR bytes."""
+        return cbor2.loads(self.payload)
 
 
 class Profile1Framer:

@@ -695,15 +695,15 @@ try:
                     return False
 
             # Export set_validator_host so it can be called when host is ready
-            setattr(pubsub_validators_typed, "set_validator_host", set_validator_host)
+            pubsub_validators_typed.set_validator_host = set_validator_host
 
             # Monkey-patch the signature_validator function in both modules
             # validators module (for future imports)
-            setattr(pubsub_validators_typed, "signature_validator", patched_signature_validator)
+            pubsub_validators_typed.signature_validator = patched_signature_validator
             # pubsub module (which has already imported it directly)
             import libp2p.pubsub.pubsub as pubsub_module
 
-            setattr(pubsub_module, "signature_validator", patched_signature_validator)
+            pubsub_module.signature_validator = patched_signature_validator
 
             logger.info("[GossipSub] Installed Ed25519 interop patch for rust-libp2p compatibility")
         except Exception as patch_err:

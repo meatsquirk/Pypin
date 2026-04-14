@@ -69,7 +69,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[dev]"
-          pip install mypy types-cbor2
+          pip install mypy
       - name: Run mypy
         run: mypy src/dcpp_python --ignore-missing-imports
         continue-on-error: true  # Don't fail CI until types are fixed

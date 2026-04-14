@@ -31,4 +31,7 @@ def test_profile1_roundtrip_property(payload):
     decoded = Profile1Framer.decode(framed)
 
     assert decoded.message_type == MessageType.HELLO
-    assert decoded.decode_payload() == payload
+    if isinstance(payload, bytes):
+        assert decoded.payload == payload
+    else:
+        assert decoded.decode_payload() == payload

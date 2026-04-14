@@ -18,12 +18,12 @@ Usage:
 
 import argparse
 import asyncio
-import hashlib
+import os
 import struct
 import sys
-import os
 import traceback
-from typing import Optional, Tuple
+from typing import Tuple
+
 
 # Ensure project is on path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -299,9 +299,10 @@ async def do_noise_handshake(
     print(_info(f"Role: {'initiator' if is_initiator else 'responder'}"))
 
     try:
-        from noise.connection import NoiseConnection, Keypair as NoiseKeypairEnum
-        from cryptography.hazmat.primitives.asymmetric import x25519
         from cryptography.hazmat.primitives import serialization as crypto_ser
+        from cryptography.hazmat.primitives.asymmetric import x25519
+        from noise.connection import Keypair as NoiseKeypairEnum
+        from noise.connection import NoiseConnection
     except ImportError as e:
         print(_err(f"Missing dependency: {e}"))
         return False
@@ -363,7 +364,7 @@ async def do_noise_handshake(
     ns.start_handshake()
 
     handshake_state = ns.noise_protocol.handshake_state
-    print(_info(f"Noise state initialized, handshake started"))
+    print(_info("Noise state initialized, handshake started"))
 
     try:
         if is_initiator:
@@ -550,8 +551,8 @@ def verify_remote_payload(info: dict, handshake_state: object, verbose: bool) ->
 
     # Verify with Ed25519
     try:
-        from nacl.signing import VerifyKey
         from nacl.exceptions import BadSignatureError
+        from nacl.signing import VerifyKey
 
         vk = VerifyKey(info["identity_key_data"])
         sig = info["identity_sig"]
