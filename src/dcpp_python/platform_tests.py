@@ -336,9 +336,7 @@ class PlatformTestSuite:
             frame = framer.decode(encoded)
             decoded = frame.decode_payload()
 
-            matches = decoded.get("node_id") == node_id and decoded.get("collections") == [
-                "test"
-            ]
+            matches = decoded.get("node_id") == node_id and decoded.get("collections") == ["test"]
 
             self.results.append(
                 PlatformTestResult(

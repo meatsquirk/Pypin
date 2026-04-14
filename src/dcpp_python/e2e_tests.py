@@ -41,6 +41,7 @@ def _run(coro: Coroutine[object, object, T]) -> T:
         raise RuntimeError("Cannot run async operation while event loop is running")
     return loop.run_until_complete(coro)
 
+
 @dataclass
 class TestNetworkConfig:
     """Configuration for a test network."""

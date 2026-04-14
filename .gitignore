@@ -24,7 +24,11 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+/MANIFEST
+!src/dcpp_python/manifest/
+!src/dcpp_python/manifest/**
+src/dcpp_python/manifest/__pycache__/
+src/dcpp_python/manifest/*.py[cod]
 
 # PyInstaller
 *.manifest

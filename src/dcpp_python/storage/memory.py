@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .base import StorageBackend, StorageStats, logger
 
+
 class MemoryStorage(StorageBackend):
     """
     In-memory storage backend for testing.

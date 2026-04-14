@@ -1081,16 +1081,13 @@ def _extract_port_from_multiaddr(multiaddr: str) -> int:
 
 
 class AppRunnerProtocol(Protocol):
-    async def setup(self) -> None:
-        ...
+    async def setup(self) -> None: ...
 
-    async def cleanup(self) -> None:
-        ...
+    async def cleanup(self) -> None: ...
 
 
 class TCPSiteProtocol(Protocol):
-    async def start(self) -> None:
-        ...
+    async def start(self) -> None: ...
 
 
 class RequestProtocol(Protocol):
@@ -2864,10 +2861,15 @@ class DCPPDaemon:
 
         state = self._state_machine.collection_state(collection_id)
         if state != SMCollectionState.COMPLETE and bt_status == "seeding":
-            bt_status = "leeching" if state in (
-                SMCollectionState.SYNCING,
-                SMCollectionState.PARTIAL,
-            ) else "none"
+            bt_status = (
+                "leeching"
+                if state
+                in (
+                    SMCollectionState.SYNCING,
+                    SMCollectionState.PARTIAL,
+                )
+                else "none"
+            )
 
         return bt_status
 
@@ -3404,7 +3406,9 @@ class DCPPDaemon:
 
                 msg_type, response_payload, _ = response
                 if msg_type == MessageType.PEERS:
-                    peers_response = cast(PeersResponse, decode_message(MessageType.PEERS, response_payload))
+                    peers_response = cast(
+                        PeersResponse, decode_message(MessageType.PEERS, response_payload)
+                    )
                     self.logger.info(
                         f"Received {len(peers_response.peers)} peers for {collection_id} from {multiaddr}"
                     )

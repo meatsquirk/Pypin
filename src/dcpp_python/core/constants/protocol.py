@@ -42,6 +42,7 @@ MAX_PEERS_PER_COLLECTION = 50
 MAX_TOTAL_CONNECTIONS = 200
 MAX_STREAMS_PER_PEER = 10
 
+
 @dataclass
 class PeerLimits:
     """Per-peer resource limits.
@@ -78,6 +79,7 @@ class PeerLimits:
             max_response_data_per_minute=1 * 1024 * 1024,  # 1 MB
             max_announces_per_5min=1,
         )
+
 
 @dataclass
 class RetryConfig:
@@ -138,6 +140,7 @@ class RetryConfig:
             max_attempts=3,
             add_jitter=True,
         )
+
 
 @dataclass
 class ConnectionHealth:
@@ -203,6 +206,7 @@ class ConnectionHealth:
         # Timeout = RTT + 4 * RTT_variance (simplified: use 4x RTT)
         timeout = int(self.rtt_estimate_ms * 4)
         return max(1000, min(timeout, 60_000))  # Between 1s and 60s
+
 
 # DHT defaults
 DHT_REANNOUNCE_INTERVAL = 3600  # 1 hour

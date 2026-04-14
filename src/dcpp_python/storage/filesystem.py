@@ -13,6 +13,7 @@ from typing import Iterator, Tuple, cast
 from .base import StorageBackend, StorageStats, logger
 from .interfaces import CollectionMetadataPayload
 
+
 class FileSystemStorage(StorageBackend):
     """
     File-system based storage backend.
@@ -242,9 +243,7 @@ class FileSystemStorage(StorageBackend):
         except OSError:
             return False
 
-    def get_collection_metadata(
-        self, collection_id: str
-    ) -> CollectionMetadataPayload | None:
+    def get_collection_metadata(self, collection_id: str) -> CollectionMetadataPayload | None:
         """Get collection metadata."""
         metadata_path = self._collection_path(collection_id) / "metadata.json"
         if not metadata_path.exists():

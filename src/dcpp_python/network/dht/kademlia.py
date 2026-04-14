@@ -712,11 +712,9 @@ class KademliaDHT(DHTBackend):
 
 
 class KademliaBackendProtocol(Protocol):
-    def add_address(self, peer_id: bytes, multiaddr: str) -> None:
-        ...
+    def add_address(self, peer_id: bytes, multiaddr: str) -> None: ...
 
-    def bootstrap(self) -> None:
-        ...
+    def bootstrap(self) -> None: ...
 
 
 def process_dht_command(

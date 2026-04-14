@@ -153,9 +153,7 @@ async def read_multistream_msg(conn: WireConn) -> bytes:
     return data
 
 
-async def do_multistream_select(
-    conn: WireConn, is_initiator: bool
-) -> bool:
+async def do_multistream_select(conn: WireConn, is_initiator: bool) -> bool:
     """Perform multistream-select and negotiate /noise. Returns True on success."""
     print(_info("=== Multistream-Select ==="))
 
@@ -175,9 +173,7 @@ async def do_multistream_select(
             if resp.rstrip(b"\n") != MULTISTREAM_PROTO.rstrip(b"\n"):
                 print(_err(f"Unexpected multistream header: {resp!r}"))
                 print(
-                    _err(
-                        f"Expected: {MULTISTREAM_PROTO!r} or {MULTISTREAM_PROTO.rstrip(b'n')!r}"
-                    )
+                    _err(f"Expected: {MULTISTREAM_PROTO!r} or {MULTISTREAM_PROTO.rstrip(b'n')!r}")
                 )
                 return False
 
@@ -226,6 +222,7 @@ async def do_multistream_select(
 # Noise XX Handshake
 # ---------------------------------------------------------------------------
 
+
 def read_noise_frame_length(data: bytes) -> int:
     """2-byte big-endian noise frame length."""
     return struct.unpack("!H", data)[0]
@@ -250,6 +247,7 @@ def parse_handshake_payload(decrypted: bytes) -> dict:
     result = {}
     try:
         from libp2p.security.noise.pb import noise_pb2
+
         msg = noise_pb2.NoiseHandshakePayload.FromString(decrypted)
 
         if msg.identity_key:
@@ -257,6 +255,7 @@ def parse_handshake_payload(decrypted: bytes) -> dict:
             # Parse the inner PublicKey protobuf
             try:
                 from libp2p.crypto.pb import crypto_pb2
+
                 pk = crypto_pb2.PublicKey.FromString(msg.identity_key)
                 result["identity_key_type"] = pk.key_type
                 result["identity_key_data"] = pk.data
@@ -285,9 +284,7 @@ def parse_handshake_payload(decrypted: bytes) -> dict:
     return result
 
 
-async def do_noise_handshake(
-    conn: WireConn, is_initiator: bool, verbose: bool = False
-) -> bool:
+async def do_noise_handshake(conn: WireConn, is_initiator: bool, verbose: bool = False) -> bool:
     """
     Perform the Noise XX handshake, logging every message.
 
@@ -323,6 +320,7 @@ async def do_noise_handshake(
     # Generate Ed25519 identity key
     try:
         from nacl.signing import SigningKey
+
         id_sk = SigningKey.generate()
         id_pk_bytes = bytes(id_sk.verify_key)
         print(_info(f"Local Ed25519 identity pubkey: {id_pk_bytes.hex()}"))
@@ -340,14 +338,14 @@ async def do_noise_handshake(
 
         # Build inner PublicKey protobuf
         from libp2p.crypto.pb import crypto_pb2
+
         inner_pk = crypto_pb2.PublicKey(key_type=1, data=id_pk_bytes)  # 1 = Ed25519
         inner_pk_bytes = inner_pk.SerializeToString()
 
         # Build NoiseHandshakePayload
         from libp2p.security.noise.pb import noise_pb2
-        payload = noise_pb2.NoiseHandshakePayload(
-            identity_key=inner_pk_bytes, identity_sig=sig
-        )
+
+        payload = noise_pb2.NoiseHandshakePayload(identity_key=inner_pk_bytes, identity_sig=sig)
         return payload.SerializeToString()
 
     our_payload = make_payload_bytes()
@@ -424,7 +422,9 @@ async def do_noise_handshake(
 
             try:
                 msg1_pt = bytes(ns.read_message(msg1_raw))
-                print(_ok(f"decrypted (should be empty): {len(msg1_pt)} bytes, content={msg1_pt!r}"))
+                print(
+                    _ok(f"decrypted (should be empty): {len(msg1_pt)} bytes, content={msg1_pt!r}")
+                )
             except Exception as e:
                 print(_fail(f"msg#1 decrypt failed: {e}"))
                 print(_err(traceback.format_exc()))
@@ -493,7 +493,9 @@ def print_payload_info(label: str, info: dict, verbose: bool) -> None:
         return
 
     if "identity_key_type_name" in info:
-        print(f"  identity key type: {info['identity_key_type_name']} (value={info['identity_key_type']})")
+        print(
+            f"  identity key type: {info['identity_key_type_name']} (value={info['identity_key_type']})"
+        )
         print(f"  identity key data: {info['identity_key_data_len']} bytes")
         if verbose and "identity_key_data" in info:
             print(f"  identity key hex:  {info['identity_key_data'].hex()}")
@@ -505,7 +507,9 @@ def print_payload_info(label: str, info: dict, verbose: bool) -> None:
     if "identity_sig_len" in info:
         print(f"  identity sig: {info['identity_sig_len']} bytes")
         if info["identity_sig_len"] != 64:
-            print(_err(f"  EXPECTED 64 bytes for Ed25519 signature, got {info['identity_sig_len']}!"))
+            print(
+                _err(f"  EXPECTED 64 bytes for Ed25519 signature, got {info['identity_sig_len']}!")
+            )
         if verbose and "identity_sig" in info:
             print(f"  sig hex: {info['identity_sig'].hex()}")
 
@@ -529,6 +533,7 @@ def verify_remote_payload(info: dict, handshake_state: object, verbose: bool) ->
 
     try:
         from cryptography.hazmat.primitives import serialization as crypto_ser
+
         remote_noise_pub_bytes = rs.public.public_bytes(
             crypto_ser.Encoding.Raw, crypto_ser.PublicFormat.Raw
         )
@@ -617,9 +622,7 @@ async def run_responder(host: str, port: int, verbose: bool) -> None:
 
     event = asyncio.Event()
 
-    async def handle_client(
-        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         addr = writer.get_extra_info("peername")
         print(_ok(f"Accepted connection from {addr}"))
         conn = WireConn(reader, writer, verbose)
@@ -640,9 +643,7 @@ async def run_responder(host: str, port: int, verbose: bool) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Noise handshake wire-level diagnostic tool"
-    )
+    parser = argparse.ArgumentParser(description="Noise handshake wire-level diagnostic tool")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--connect",

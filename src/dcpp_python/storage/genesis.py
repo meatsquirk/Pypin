@@ -17,6 +17,7 @@ from typing import Optional
 
 from .base import logger
 
+
 class GenesisState(Enum):
     """State of a genesis record."""
 
@@ -86,9 +87,7 @@ class GenesisRecord:
             manifest_version=data["manifest_version"],
             first_seen_at=data["first_seen_at"],
             announcing_node_id=(
-                bytes.fromhex(announcing_node_id)
-                if announcing_node_id is not None
-                else None
+                bytes.fromhex(announcing_node_id) if announcing_node_id is not None else None
             ),
             conflict_cids=data.get("conflict_cids", []),
             state=GenesisState(data.get("state", "trusted")),

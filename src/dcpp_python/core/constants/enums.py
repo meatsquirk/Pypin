@@ -15,6 +15,7 @@ else:
 
         pass
 
+
 class MessageType(IntEnum):
     """DCPP Message Type Codes (Section 6.1)"""
 

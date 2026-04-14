@@ -122,7 +122,9 @@ class DCPPClient:
             data += chunk
         return data
 
-    def send_hello(self, collections: list[str] | None = None) -> tuple[MessageType, MessageBase] | None:
+    def send_hello(
+        self, collections: list[str] | None = None
+    ) -> tuple[MessageType, MessageBase] | None:
         """Send HELLO and receive response."""
         hello = Hello(
             version=Hello.DEFAULT_VERSION,
@@ -148,7 +150,9 @@ class DCPPClient:
 
         return result
 
-    def send_get_peers(self, collection_id: str, max_peers: int = 20) -> tuple[MessageType, MessageBase] | None:
+    def send_get_peers(
+        self, collection_id: str, max_peers: int = 20
+    ) -> tuple[MessageType, MessageBase] | None:
         """Send GET_PEERS and receive response."""
         get_peers = GetPeers(
             collection_id=collection_id,

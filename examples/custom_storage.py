@@ -31,7 +31,9 @@ class DictStorage(StorageBackend):
     def get_stats(self) -> StorageStats:
         total_items = sum(len(items) for items in self._data.values())
         total_size = sum(len(value) for items in self._data.values() for value in items.values())
-        return StorageStats(total_items=total_items, total_size_bytes=total_size, collections=len(self._data))
+        return StorageStats(
+            total_items=total_items, total_size_bytes=total_size, collections=len(self._data)
+        )
 
 
 def main() -> None:

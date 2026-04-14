@@ -51,7 +51,21 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncContextManager, Awaitable, Callable, Dict, List, Optional, Protocol, Set, Tuple, Type, TYPE_CHECKING, cast
+from typing import (
+    Any,
+    AsyncContextManager,
+    Awaitable,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Protocol,
+    Set,
+    Tuple,
+    Type,
+    TYPE_CHECKING,
+    cast,
+)
 
 # Trio support for libp2p 0.5.0+
 try:
@@ -89,42 +103,32 @@ if TYPE_CHECKING:
 
 
 class KadDHTProtocol(Protocol):
-    async def provide(self, key: str) -> None:
-        ...
+    async def provide(self, key: str) -> None: ...
 
-    async def find_providers(self, key: str) -> list[object]:
-        ...
+    async def find_providers(self, key: str) -> list[object]: ...
 
-    async def put_value(self, key: str, value: bytes) -> None:
-        ...
+    async def put_value(self, key: str, value: bytes) -> None: ...
 
-    async def get_value(self, key: str) -> Optional[bytes]:
-        ...
+    async def get_value(self, key: str) -> Optional[bytes]: ...
 
-    def add_address(self, peer_id: bytes, multiaddr: str) -> None:
-        ...
+    def add_address(self, peer_id: bytes, multiaddr: str) -> None: ...
 
-    def bootstrap(self) -> None:
-        ...
+    def bootstrap(self) -> None: ...
 
 
 class PubSubProtocol(Protocol):
-    async def publish(self, topic: str, data: bytes) -> None:
-        ...
+    async def publish(self, topic: str, data: bytes) -> None: ...
 
-    async def subscribe(self, topic: str) -> object:
-        ...
+    async def subscribe(self, topic: str) -> object: ...
 
-    async def unsubscribe(self, topic: str) -> None:
-        ...
+    async def unsubscribe(self, topic: str) -> None: ...
 
 
 class PubsubValidatorsProtocol(Protocol):
     signature_validator: Callable[[object], bool]
     PUBSUB_SIGNING_PREFIX: str
 
-    def set_validator_host(self, host: object) -> None:
-        ...
+    def set_validator_host(self, host: object) -> None: ...
 
 
 class PeerInfoProtocol(Protocol):
@@ -132,48 +136,36 @@ class PeerInfoProtocol(Protocol):
 
 
 class PeerIDFactory(Protocol):
-    def __call__(self, peer_id: bytes) -> object:
-        ...
+    def __call__(self, peer_id: bytes) -> object: ...
 
 
 class MultiaddrFactory(Protocol):
-    def __call__(self, addr: str) -> object:
-        ...
+    def __call__(self, addr: str) -> object: ...
 
 
 class InfoFromP2PAddrProtocol(Protocol):
-    def __call__(self, addr: object) -> PeerInfoProtocol:
-        ...
-
+    def __call__(self, addr: object) -> PeerInfoProtocol: ...
 
 
 class Libp2pHostProtocol(Protocol):
-    def get_id(self) -> object:
-        ...
+    def get_id(self) -> object: ...
 
-    def set_stream_handler(self, protocol_id: object, handler: StreamHandler) -> None:
-        ...
+    def set_stream_handler(self, protocol_id: object, handler: StreamHandler) -> None: ...
 
-    def get_transport_addrs(self) -> list[object]:
-        ...
+    def get_transport_addrs(self) -> list[object]: ...
 
-    def run(self, listen_addrs: list[object]) -> AsyncContextManager[None]:
-        ...
+    def run(self, listen_addrs: list[object]) -> AsyncContextManager[None]: ...
 
-    async def connect(self, peer_info: object) -> None:
-        ...
+    async def connect(self, peer_info: object) -> None: ...
 
-    async def disconnect(self, peer_id: object) -> None:
-        ...
+    async def disconnect(self, peer_id: object) -> None: ...
 
-    async def new_stream(self, peer_id: object, protocols: list[object]) -> StreamProtocol:
-        ...
+    async def new_stream(self, peer_id: object, protocols: list[object]) -> StreamProtocol: ...
 
-    def get_connected_peers(self) -> list[object]:
-        ...
+    def get_connected_peers(self) -> list[object]: ...
 
-    def get_network(self) -> object:
-        ...
+    def get_network(self) -> object: ...
+
 
 logger = logging.getLogger(__name__)
 
@@ -891,9 +883,7 @@ class RealHost(HostProtocol):
         try:
             import libp2p as _libp2p_mod
 
-            logger.info(
-                "py-libp2p version: %s", getattr(_libp2p_mod, "__version__", "unknown")
-            )
+            logger.info("py-libp2p version: %s", getattr(_libp2p_mod, "__version__", "unknown"))
         except Exception as e:
             logger.debug(f"Failed to read py-libp2p version: {e}")
 
@@ -914,9 +904,7 @@ class RealHost(HostProtocol):
         try:
             pub_len = len(self._key_pair.public_key.to_bytes())
             priv_len = len(self._key_pair.private_key.to_bytes())
-            logger.info(
-                f"Identity key lengths: public={pub_len} bytes, private={priv_len} bytes"
-            )
+            logger.info(f"Identity key lengths: public={pub_len} bytes, private={priv_len} bytes")
         except Exception as e:
             logger.debug(f"Failed to read identity key lengths: {e}")
 
@@ -931,9 +919,7 @@ class RealHost(HostProtocol):
                         noise_privkey=noise_key_pair.private_key,
                     ),
                 }
-                logger.info(
-                    "[Noise] Using dedicated X25519 static key for Noise transport"
-                )
+                logger.info("[Noise] Using dedicated X25519 static key for Noise transport")
             elif noise_only:
                 sec_opt = {
                     NOISE_PROTOCOL_ID: NoiseTransport(self._key_pair),
@@ -943,9 +929,7 @@ class RealHost(HostProtocol):
             logger.warning(f"[Noise] Failed to configure explicit Noise transport: {e}")
 
         if sec_opt is not None:
-            logger.info(
-                "[Noise] Security protocols: %s", [str(p) for p in sec_opt.keys()]
-            )
+            logger.info("[Noise] Security protocols: %s", [str(p) for p in sec_opt.keys()])
 
         # Create the host (but don't start yet - that happens in host.run())
         self._host = cast(
@@ -1062,7 +1046,9 @@ class RealHost(HostProtocol):
                                     logger.debug(f"[GossipSub] Could not set validator host: {e}")
 
                                 # Message receiver task for subscriptions
-                                async def _receive_messages(topic: str, subscription: object) -> None:
+                                async def _receive_messages(
+                                    topic: str, subscription: object
+                                ) -> None:
                                     """Receive messages from a subscription and deliver to handlers."""
                                     logger.debug(
                                         f"[GossipSub] Starting message receiver for {topic}"
@@ -1892,9 +1878,7 @@ class RealHost(HostProtocol):
                 has_add_address = hasattr(kad, "add_address") and callable(
                     getattr(kad, "add_address")
                 )
-                has_bootstrap = hasattr(kad, "bootstrap") and callable(
-                    getattr(kad, "bootstrap")
-                )
+                has_bootstrap = hasattr(kad, "bootstrap") and callable(getattr(kad, "bootstrap"))
                 if not has_add_address or not has_bootstrap:
                     return DHTResponse(
                         success=False,
@@ -2280,9 +2264,7 @@ class DCPPRealNode:
         topic = self._collection_topic(collection_id)
         return await self._host.unsubscribe(topic)
 
-    def _handle_collection_message(
-        self, topic: str, data: bytes, sender: Optional[bytes]
-    ) -> None:
+    def _handle_collection_message(self, topic: str, data: bytes, sender: Optional[bytes]) -> None:
         """
         Handle incoming GossipSub message for a collection.
 
