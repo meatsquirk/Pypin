@@ -189,6 +189,19 @@ DEFAULT_DOCKER_SERVICES = [
 _CLUSTER_STARTED = False
 _BOOTSTRAP_SETUP_DONE = False
 
+
+def _skip_known_compose_startup_failure(err: str) -> None:
+    """Skip when compose fails for known non-hermetic environment reasons."""
+    if "Pool overlaps" in err or "overlaps with other one" in err:
+        pytest.skip(f"Docker network pool overlap: {err}")
+
+    if "unable to prepare context" in err and "dcpp-rust" in err:
+        pytest.skip(
+            "Missing external dcpp-rust checkout required for real E2E tests: "
+            f"{err}"
+        )
+
+
 def is_docker_running() -> bool:
     """Check if Docker daemon is running."""
     try:
@@ -242,9 +255,9 @@ def ensure_docker_cluster(reason: str, services: Optional[List[str]] = None) -> 
         timeout=300,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"Failed to start docker compose services: {result.stderr.strip()}"
-        )
+        err = result.stderr.strip()
+        _skip_known_compose_startup_failure(err)
+        raise RuntimeError(f"Failed to start docker compose services: {err}")
     _CLUSTER_STARTED = True
 
 
