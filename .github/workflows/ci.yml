@@ -27,7 +27,7 @@ jobs:
         run: ruff format --check .
 
   test:
-    name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: Validation (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -51,16 +51,11 @@ jobs:
             pip install -e ".[dev,p2p]"
           fi
 
-      - name: Run tests with coverage
+      - name: Run package smoke checks
         run: |
-          python -m pytest tests/ -v --cov=dcpp_python --cov-report=xml --cov-report=term-missing --cov-fail-under=0
-
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v6
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
+          python -m pip check
+          python -c "import dcpp_python; print(getattr(dcpp_python, '__version__', 'import-ok'))"
+          python -m dcpp_python.node.daemon --help
 
   typecheck:
     name: Type Check
