@@ -92,6 +92,22 @@ ehthumbs.db
 .claude/
 CLAUDE.md
 
+# Excluded from the public implementation repo
+Dockerfile
+docker-compose.yml
+docker-compose.example.yml
+tests/
+tests/Dockerfile.python
+scripts/get-rust-peer-id.sh
+scripts/noise_handshake_diag.py
+scripts/prometheus.yml
+src/dcpp_python/e2e_tests.py
+src/dcpp_python/load_tests.py
+src/dcpp_python/platform_tests.py
+src/dcpp_python/security_audit.py
+docs/E2E_TEST_EVALUATION.md
+docs/libp2p-noise-interop-issue.md
+
 # Internal planning documents (not for public repo)
 docs/IMPROVEMENT_ROADMAP.md
 docs/DCPP-PYTHON-CODE-REVIEW.md
