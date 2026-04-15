@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  validate:
+    name: Validate release metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate version consistency and changelog
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import os
+          import re
+          import sys
+          import tomllib
+
+          ref_name = os.environ.get("GITHUB_REF_NAME", "")
+          if not ref_name:
+            print("Missing GITHUB_REF_NAME")
+            raise SystemExit(1)
+
+          tag_version = ref_name[1:] if ref_name.startswith("v") else ref_name
+          if not re.fullmatch(r"\d+\.\d+\.\d+(?:[a-zA-Z0-9\.\-]+)?", tag_version):
+            print(f"Tag '{ref_name}' does not look like a version.")
+            raise SystemExit(1)
+
+          with open("pyproject.toml", "rb") as handle:
+            pyproject = tomllib.load(handle)
+          project_version = pyproject["project"]["version"]
+
+          init_text = open("src/dcpp_python/__init__.py", "r", encoding="utf-8").read()
+          match = re.search(r'__version__\s*=\s*"([^"]+)"', init_text)
+          if not match:
+            print("Could not find __version__ in src/dcpp_python/__init__.py")
+            raise SystemExit(1)
+          init_version = match.group(1)
+
+          if tag_version != project_version or tag_version != init_version:
+            print(
+              "Version mismatch:",
+              f"tag={tag_version}",
+              f"pyproject={project_version}",
+              f"__init__={init_version}",
+            )
+            raise SystemExit(1)
+
+          changelog = open("CHANGELOG.md", "r", encoding="utf-8").read()
+          if f"## [{tag_version}]" not in changelog:
+            print(f"CHANGELOG.md missing entry for version {tag_version}")
+            raise SystemExit(1)
+          PY
+
+  publish:
+    name: Build and publish
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+      - name: Build dist
+        run: python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

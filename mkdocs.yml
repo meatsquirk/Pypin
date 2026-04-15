@@ -1,0 +1,46 @@
+site_name: DCPP Python
+repo_url: https://github.com/meatsquirk/Pypin
+repo_name: meatsquirk/Pypin
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - API:
+      - Core: api/core.md
+      - Messages: api/messages.md
+      - Storage: api/storage.md
+      - Network: api/network.md
+      - Node: api/node.md
+  - Contributing: contributing.md
+  - RFC Wire Protocol: DCPP-RFC-Wire-Protocol.md
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - mermaid-init.js

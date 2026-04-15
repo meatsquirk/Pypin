@@ -1,0 +1,264 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dcpp-python"
+version = "0.1.0"
+description = "Distributed Content Preservation Protocol (DCPP) Wire Protocol Implementation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Matthew Quirk", email = "matthew@example.com"}
+]
+keywords = [
+    "dcpp",
+    "distributed",
+    "content-preservation",
+    "protocol",
+    "libp2p",
+    "bittorrent",
+    "ipfs",
+    "nft",
+    "blockchain",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: System :: Archiving",
+    "Topic :: System :: Distributed Computing",
+    "Typing :: Typed",
+]
+dependencies = [
+    "cbor2>=5.4.0",
+    "cryptography>=41.0.0",
+    "pynacl>=1.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-benchmark>=4.0.0",
+    "hypothesis>=6.0.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.25.0",
+    "pymdown-extensions>=10.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.9.0",
+    "pre-commit>=3.0.0",
+]
+bittorrent = [
+    "torf>=4.0.0",
+]
+p2p = [
+    # Consume upstream Noise/X25519 fixes from py-libp2p until a PyPI release includes PRs
+    # libp2p/py-libp2p#1195 and #1303.
+    "libp2p @ https://github.com/libp2p/py-libp2p/archive/d91506372f87ab01a488facd0c94bc100eff02af.tar.gz",
+]
+discovery = [
+    "dnspython>=2.3.0",
+    "aiohttp>=3.9.0",
+]
+all = [
+    "dcpp-python[dev]",
+    "dcpp-python[bittorrent]",
+    "dcpp-python[p2p]",
+    "dcpp-python[discovery]",
+]
+
+[project.urls]
+Homepage = "https://github.com/meatsquirk/Pypin"
+Documentation = "https://github.com/meatsquirk/Pypin#readme"
+Repository = "https://github.com/meatsquirk/Pypin.git"
+Issues = "https://github.com/meatsquirk/Pypin/issues"
+Changelog = "https://github.com/meatsquirk/Pypin/blob/main/CHANGELOG.md"
+
+[project.scripts]
+dcpp-client = "dcpp_python.node.client:main"
+dcpp-daemon = "dcpp_python.node.daemon:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["dcpp_python*"]
+
+[tool.setuptools.package-data]
+dcpp_python = ["py.typed"]
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests",
+    "benchmark: marks performance tests",
+    "fuzz: marks fuzz/property-based tests",
+    "priority_blocker: marks tests that gate release readiness",
+    "priority_p1: marks critical priority tests",
+    "priority_p2: marks high priority tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["dcpp_python"]
+branch = true
+parallel = true
+omit = [
+    "dcpp_python/e2e_tests.py",
+    "dcpp_python/load_tests.py",
+    "dcpp_python/platform_tests.py",
+    "dcpp_python/security_audit.py",
+]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if sys.version_info",
+    "raise NotImplementedError",
+    "@abstractmethod",
+    "if TYPE_CHECKING:",
+    "def __repr__",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Ruff configuration (linting and formatting)
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+src = ["src"]
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "tests",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "S",   # flake8-bandit (security)
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "S101",  # assert used (ok in tests)
+    "S311",  # random not for crypto (we use it for non-crypto)
+    "E402",  # module import not at top (legacy layout)
+    "B904",  # missing exception chaining (legacy style)
+    "B007",  # unused loop variable (legacy style)
+    "B009",  # getattr with constant attribute (legacy style)
+    "SIM",   # simplify suggestions (defer to later refactor)
+    "UP",    # typing modernizations (defer to later refactor)
+    "S110",  # try-except-pass (legacy style)
+    "S112",  # try-except-continue (legacy style)
+    "S310",  # urllib without scheme allowlist (legacy style)
+    "S324",  # sha1 use for BitTorrent v1 compatibility
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]  # Allow asserts and hardcoded passwords in tests
+"src/dcpp_python/__init__.py" = ["F401", "F403", "I001"]
+"src/dcpp_python/*.py" = ["F401", "F403", "I001"]
+"src/dcpp_python/**/__init__.py" = ["F401", "F403", "I001"]
+"src/dcpp_python/core/messages.py" = ["UP037"]
+"src/dcpp_python/core/uci.py" = ["UP045"]
+"src/dcpp_python/network/libp2p/real.py" = ["N811"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dcpp_python"]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# Mypy configuration
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+files = ["src/dcpp_python"]
+exclude = [
+    "tests/",
+    "build/",
+    "dist/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "cbor2.*",
+    "nacl.*",
+    "libp2p.*",
+    "torf.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "dcpp_python.e2e_tests",
+    "dcpp_python.load_tests",
+    "dcpp_python.platform_tests",
+    "dcpp_python.security_audit",
+]
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "dcpp_python.core.utils",
+    "dcpp_python.core.framing",
+    "dcpp_python.core.validation",
+    "dcpp_python.crypto.cid",
+    "dcpp_python.network.dht.kademlia",
+    "dcpp_python.network.dht.base",
+    "dcpp_python.node.client",
+    "dcpp_python.node.daemon",
+    "dcpp_python.storage.backend",
+]
+check_untyped_defs = true
+
+# Bandit configuration
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+skips = ["B101", "B311"]  # assert_used, random
