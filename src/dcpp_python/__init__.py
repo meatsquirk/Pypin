@@ -157,36 +157,6 @@ from .network.bittorrent.real import (
     recommended_piece_length_bep52,
     get_backend as get_bittorrent_backend,
 )
-from .e2e_tests import (
-    TestNetworkConfig,
-    TestNetwork,
-    TestNode,
-    TestScenario,
-    TestScenarioResult,
-    run_basic_p2p_test,
-    run_stress_test,
-    run_partition_test,
-)
-from .security_audit import (
-    SecurityAuditConfig,
-    SecurityAuditor,
-    AuditResult,
-    run_security_audit,
-)
-from .load_tests import (
-    LoadTestConfig,
-    LoadTestMetrics,
-    LoadTestRunner,
-    ThroughputResult,
-    run_quick_load_test,
-    benchmark_throughput,
-)
-from .platform_tests import (
-    PlatformInfo,
-    PlatformTestResult,
-    PlatformTestSuite,
-    run_platform_tests,
-)
 from .core.validation import (
     MessageValidator,
     ValidationResult,
@@ -351,32 +321,6 @@ __all__ = [
     "PieceMapping",
     "recommended_piece_length_bep52",
     "get_bittorrent_backend",
-    # E2E Tests
-    "TestNetworkConfig",
-    "TestNetwork",
-    "TestNode",
-    "TestScenario",
-    "TestScenarioResult",
-    "run_basic_p2p_test",
-    "run_stress_test",
-    "run_partition_test",
-    # Security Audit
-    "SecurityAuditConfig",
-    "SecurityAuditor",
-    "AuditResult",
-    "run_security_audit",
-    # Load Tests
-    "LoadTestConfig",
-    "LoadTestMetrics",
-    "LoadTestRunner",
-    "ThroughputResult",
-    "run_quick_load_test",
-    "benchmark_throughput",
-    # Platform Tests
-    "PlatformInfo",
-    "PlatformTestResult",
-    "PlatformTestSuite",
-    "run_platform_tests",
     # Validation
     "MessageValidator",
     "ValidationResult",
