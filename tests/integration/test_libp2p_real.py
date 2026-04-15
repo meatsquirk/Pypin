@@ -20,9 +20,15 @@ from dcpp_python.libp2p_real import (
     read_framed_message,
     RealHost,
 )
+from dcpp_python.network.libp2p.real import is_available as libp2p_available
 from dcpp_python.framing import Profile1Framer
 from dcpp_python.messages import MessageType
 from dcpp_python.dht_real import DHTCommand
+
+requires_libp2p = pytest.mark.skipif(
+    not libp2p_available(),
+    reason="py-libp2p not available in this environment",
+)
 
 
 class TestHostEventData:
@@ -186,6 +192,7 @@ class _FakeKadDHT:
         self.bootstraps += 1
 
 
+@requires_libp2p
 class TestDhtBootstrapWiring:
     @pytest.mark.asyncio
     async def test_bootstrap_seeds_routing_table(self, monkeypatch):
@@ -238,6 +245,7 @@ class TestProtocolID:
 
 
 # Mock-based tests for when libp2p is not available
+@requires_libp2p
 class TestRealHostMocked:
     """Tests for RealHost using mocks."""
 

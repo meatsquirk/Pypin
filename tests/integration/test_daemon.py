@@ -430,6 +430,7 @@ class TestDCPPDaemon:
             enable_guardian=True,
             enable_seeder=False,
             enable_private=False,
+            use_libp2p=False,
         )
         daemon = DCPPDaemon(config)
 
@@ -664,6 +665,7 @@ class TestBootstrap:
         return DaemonConfig(
             collections=["test:collection"],
             bootstrap_peers=[],  # Will be set per test
+            use_libp2p=False,
         )
 
     def test_daemon_initializes_peer_tables(self, config_with_collection):
@@ -689,6 +691,7 @@ class TestBootstrap:
         """Bootstrap should populate peer tables from discovered peers."""
         config = DaemonConfig(
             collections=["test:collection"],
+            use_libp2p=False,
         )
         daemon = DCPPDaemon(config)
 
@@ -711,7 +714,7 @@ class TestBootstrap:
     @pytest.mark.asyncio
     async def test_connect_to_invalid_peer_fails(self):
         """Connecting to invalid peer should return False."""
-        config = DaemonConfig(collections=["test:collection"])
+        config = DaemonConfig(collections=["test:collection"], use_libp2p=False)
         daemon = DCPPDaemon(config)
         daemon.peer_tables["test:collection"] = PeerTable("test:collection")
 
@@ -757,7 +760,7 @@ class TestDaemonLockPathRegression:
         This guards the "initial guardian" path when no peers exist, ensuring
         the daemon schedules the download action asynchronously.
         """
-        config = DaemonConfig(collections=["test:collection"])
+        config = DaemonConfig(collections=["test:collection"], use_libp2p=False)
         daemon = DCPPDaemon(config)
 
         started = asyncio.Event()
@@ -881,7 +884,7 @@ class TestHealthProbeChallengeValidation:
     @pytest.fixture
     def daemon_with_content(self):
         """Create a daemon with content for testing."""
-        config = DaemonConfig(collections=["test:collection"])
+        config = DaemonConfig(collections=["test:collection"], use_libp2p=False)
         daemon = DCPPDaemon(config)
         # Mock the retrieve_content method to return test data
         daemon._test_content = b"0123456789" * 100  # 1000 bytes
