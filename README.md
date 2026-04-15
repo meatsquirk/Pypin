@@ -1,401 +1,330 @@
 # DCPP Python Implementation
 
 [![CI](https://github.com/meatsquirk/Pypin/actions/workflows/ci.yml/badge.svg)](https://github.com/meatsquirk/Pypin/actions/workflows/ci.yml)
-[![Codecov](https://codecov.io/gh/meatsquirk/Pypin/branch/main/graph/badge.svg)](https://codecov.io/gh/meatsquirk/Pypin)
 [![PyPI](https://img.shields.io/pypi/v/dcpp-python.svg)](https://pypi.org/project/dcpp-python/)
 
-Python proof-of-concept implementation of the Distributed Content Preservation Protocol (DCPP) wire protocol.
+`dcpp-python` is a Python implementation of the Distributed Content Preservation Protocol (DCPP) wire protocol.
+
+DCPP enables decentralized preservation of content across cooperating nodes. The protocol combines framed request/response messages, canonical CBOR signing, content-addressed manifests, peer discovery, and optional BitTorrent data transfer.
+
+## What This Library Provides
+
+- **Wire Protocol** - Profile 1 envelope framing with CRC32C integrity checks
+- **Message Types** - DCPP message structures for HELLO, ANNOUNCE, MANIFEST, PEERS, HEALTH_PROBE, GOODBYE, and related flows
+- **Cryptographic Signing** - Ed25519 signatures over canonical CBOR payloads
+- **CID Verification** - IPFS-compatible CIDv1 content addressing and verification
+- **Storage Backend** - File-system and in-memory storage backends with content verification
+- **State Machine** - Node and collection state management for protocol flows
+- **Collection Encryption Helpers** - AES-256-GCM primitives and manifest-level encryption metadata
+
+Optional extras add:
+
+- **libp2p Networking** - Real P2P transport with Noise, Kademlia DHT, and GossipSub
+- **BitTorrent** - BEP 52-oriented torrent metadata and transfer backend support
+- **Bootstrap Discovery + HTTP API** - DNS/IPNS bootstrap support and daemon health/status endpoints
 
 ## Quick Start
 
 ```bash
-# Install core package
+# Install the core package
 pip install -e .
 
-# Run tests
-python3 -m pytest -m "not benchmark"
-```
+# Start a local daemon
+python -m dcpp_python.node.daemon --listen 0.0.0.0:4001
 
-## Documentation
-
-```bash
-pip install -e ".[dev]"
-mkdocs serve
+# Inspect the client CLI
+python -m dcpp_python.node.client --help
 ```
 
 ## Installation
 
-### Prerequisites
+### Requirements
 
 - Python 3.9 or higher
-- pip (Python package manager)
+- `pip`
 
-### Step 1: Install Core Dependencies
+### Core Package
 
 ```bash
 pip install -e .
 ```
 
-This installs the required dependencies:
-- `cbor2>=5.4.0` - CBOR serialization (RFC 8949)
-- `cryptography>=41.0.0` - Cryptographic primitives
-- `pynacl>=1.5.0` - Ed25519 signatures
+Core dependencies include:
 
-### Step 2: Install Dev Dependencies (Optional)
+- `cbor2` for canonical CBOR serialization
+- `cryptography` for encryption primitives
+- `pynacl` for Ed25519 signing
+
+### Optional Extras
 
 ```bash
+# Development tooling
 pip install -e ".[dev]"
-```
 
-This adds:
-- `pytest>=7.0.0` - Test framework
-- `pytest-cov>=4.0.0` - Coverage reporting
-- `pytest-asyncio>=0.23.0` - Async test support
-
-### Step 3: Install P2P Networking (Optional)
-
-For real libp2p networking with Kademlia DHT and GossipSub:
-
-```bash
+# libp2p networking
 pip install -e ".[p2p]"
-```
 
-**Platform-specific notes:**
-
-```bash
-# macOS - may need OpenSSL
-brew install openssl
-
-# Ubuntu/Debian
-sudo apt-get install libssl-dev python3-dev
-
-# Windows - requires Visual C++ Build Tools
-```
-
-**Verify installation:**
-```bash
-python3 -c "from libp2p import new_host; print('libp2p OK')"
-```
-
-### Step 4: Install BitTorrent Support (Optional)
-
-For BEP 52 compliant hybrid v1+v2 torrent creation:
-
-```bash
+# BitTorrent support
 pip install -e ".[bittorrent]"
-```
 
-**Verify installation:**
-```bash
-python3 -c "import torf; print(f'torf {torf.__version__} OK')"
-```
-
-### Step 5: Install Discovery + HTTP API (Optional)
-
-For DNS/IPNS bootstrap discovery and HTTP API health endpoints:
-
-```bash
+# Bootstrap discovery and HTTP API helpers
 pip install -e ".[discovery]"
-```
 
-### Install All Optional Dependencies
-
-```bash
+# Everything
 pip install -e ".[all]"
 ```
 
-## Verification
-
-Run the full verification script:
+### Platform Notes
 
 ```bash
-python3 << 'EOF'
-checks = []
+# macOS
+brew install openssl
 
-# Core
-import cbor2; checks.append("cbor2 OK")
-import nacl; checks.append("pynacl OK")
-
-# libp2p
-try:
-    from libp2p import new_host
-    checks.append("libp2p OK")
-except ImportError:
-    checks.append("libp2p MISSING (P2P networking unavailable)")
-
-# torf
-try:
-    import torf
-    checks.append(f"torf {torf.__version__} OK")
-except ImportError:
-    checks.append("torf MISSING (will use native BitTorrent backend)")
-
-try:
-    import aiohttp
-    checks.append("aiohttp OK")
-except ImportError:
-    checks.append("aiohttp MISSING (HTTP API + discovery limited)")
-
-try:
-    import dns.resolver
-    checks.append("dnspython OK")
-except ImportError:
-    checks.append("dnspython MISSING (DNS discovery limited)")
-
-for c in checks:
-    symbol = "+" if "OK" in c else "-"
-    print(f"  [{symbol}] {c}")
-EOF
+# Ubuntu / Debian
+sudo apt-get install libssl-dev python3-dev
 ```
-
-## Running Tests
-
-```bash
-# Run all tests
-python3 -m pytest -m "not benchmark"
-
-# Run specific test categories
-python3 -m pytest tests/e2e/test_interop.py -v           # Interop tests
-python3 -m pytest tests/unit/core/test_framing.py -v     # Framing tests
-python3 -m pytest tests/unit/core/test_messages.py -v    # Message tests
-
-# Run with coverage
-python3 -m pytest tests/ --cov=dcpp_python --cov-report=term-missing
-
-# Run benchmarks
-python3 -m pytest -m benchmark --benchmark-only
-```
-
-### Interop Tests (Requires Rust)
-
-To run cross-language interoperability tests:
-
-```bash
-# Generate test vectors from Rust implementation
-cd ..
-cargo run --bin generate_test_vectors > dcpp-python/tests/fixtures/test_vectors.json
-
-# Run Python interop tests
-cd dcpp-python
-python3 -m pytest tests/e2e/test_interop.py -v
-```
-
-## Environment Variables
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `DCPP_STUB_MODE` | Enable stub DHT operations for testing | `1` (enabled) |
-| `DCPP_BT_ALLOW_LOCAL` | Allow native BT backend without torf | `1` (allowed) |
-
-**Strict mode** (fail if dependencies missing):
-```bash
-DCPP_STUB_MODE=0 DCPP_BT_ALLOW_LOCAL=0 python3 -m dcpp_python.node.client hello
-```
-
-## Production vs Local-Only Modes
-
-This repository ships a safe local-only path for testing. For production or public networks:
-
-- Use libp2p transport (`.[p2p]`) instead of raw TCP. Raw TCP is for testing only.
-- Avoid stub modes: set `DCPP_STUB_MODE=0` to disable stub DHT behavior.
-- Use BEP 52 compliant torrents via `torf` (`.[bittorrent]`); local-only hashes are non-compliant.
 
 ## Usage Examples
 
-### Start a Client
-
-```bash
-# Send HELLO message
-python -m dcpp_python.node.client hello
-
-# Get peers for a collection
-python -m dcpp_python.node.client get-peers eth:0xBC4CA0
-
-# Health probe
-python -m dcpp_python.node.client health-probe eth:0xBC4CA0
-```
-
-### Use as a Library
+### Create and Frame a HELLO Message
 
 ```python
-from dcpp_python.core.messages import HelloMessage, MessageType
-from dcpp_python.core.framing import Profile1Framer
-from dcpp_python.crypto.signing import generate_keypair, sign_message
+import time
 
-# Create a message
-hello = HelloMessage(
-    protocol_version="1.0",
-    node_id=b"...",  # 38-byte libp2p PeerId
-    capabilities=["announce", "manifest"],
+from dcpp_python import Hello, MessageType, Profile1Framer, generate_keypair, derive_peer_id
+
+signing_key, verify_key = generate_keypair()
+peer_id = derive_peer_id(verify_key)
+
+hello = Hello(
+    version=Hello.DEFAULT_VERSION,
+    node_id=peer_id,
+    capabilities=["guardian", "seeder"],
+    collections=["example:collection"],
+    timestamp=int(time.time()),
+    user_agent="dcpp-python",
 )
 
-# Encode with Profile 1 framing
-frame = Profile1Framer.encode(MessageType.HELLO, hello.to_cbor())
-
-# Sign a message
-keypair = generate_keypair()
-signed_data = sign_message(data_dict, keypair.private_key)
+frame = Profile1Framer.encode(MessageType.HELLO, hello.to_dict())
 ```
 
-## Troubleshooting
+### Sign Canonical CBOR Payloads
 
-### py-libp2p Installation Fails
+```python
+from dcpp_python import generate_keypair
+from dcpp_python.crypto.signing import sign_message, verify_signature
 
-```bash
-# Install build dependencies first
-pip install --upgrade pip setuptools wheel
-pip install cython
+signing_key, verify_key = generate_keypair()
+payload = {"collection": "example:collection", "coverage": 1.0}
 
-# On Ubuntu/Debian
-sudo apt-get install build-essential libssl-dev libffi-dev python3-dev
-
-# On macOS
-xcode-select --install
-brew install openssl
-export LDFLAGS="-L/opt/homebrew/opt/openssl/lib"
-export CPPFLAGS="-I/opt/homebrew/opt/openssl/include"
-pip install -e ".[p2p]"
+signature = sign_message(payload, signing_key)
+assert verify_signature(payload, signature, verify_key)
 ```
 
-### torf Import Error
+### Compute and Verify a CID
 
-```bash
-# Requires Python 3.7+
-python3 --version
+```python
+from dcpp_python import compute_cid, verify_cid
 
-# Reinstall cleanly
-pip uninstall torf
-pip install --no-cache-dir "torf>=4.0.0"
+content = b"Hello, DCPP!"
+cid = compute_cid(content)
+
+assert verify_cid(cid, content)
 ```
 
-### Test Vectors Not Found
+### Store Verified Content
 
-```bash
-# Generate from Rust implementation
-cd /path/to/DistributedContentPreservationProtocol
-cargo run --bin generate_test_vectors > dcpp-python/tests/test_vectors.json
+```python
+from dcpp_python import FileSystemStorage
+
+storage = FileSystemStorage("./data")
+cid, ok = storage.store_verified("example:collection", b"hello world")
+
+assert ok
+assert storage.retrieve_verified("example:collection", cid) == b"hello world"
 ```
 
-## Project Structure
+## Collection Encryption
 
+Collection encryption is modeled in the manifest layer and implemented with AES-256-GCM helpers in `dcpp_python.crypto.signing`.
+
+- `generate_collection_key()` creates a 32-byte collection key
+- `AES256GCM` provides low-level encrypt/decrypt helpers
+- `encrypt_content()` and `decrypt_content()` wrap the common content flow
+- `EncryptionConfig` in manifests records the algorithm and scope metadata for encrypted collections
+
+Example:
+
+```python
+from dcpp_python.crypto.signing import (
+    generate_collection_key,
+    encrypt_content,
+    decrypt_content,
+)
+
+key = generate_collection_key()
+nonce, ciphertext = encrypt_content(b"secret payload", key)
+plaintext = decrypt_content(nonce, ciphertext, key)
+
+assert plaintext == b"secret payload"
 ```
+
+Current Python support covers cryptographic helpers and manifest metadata. Transport-level encryption is handled separately by libp2p Noise when the `p2p` extra is installed.
+
+## Protocol Messages
+
+Primary DCPP message types include:
+
+| Type | Code | Description |
+|------|------|-------------|
+| `HELLO` | `0x0001` | Peer introduction and capability exchange |
+| `ANNOUNCE` | `0x0002` | Collection availability announcement |
+| `GET_MANIFEST` | `0x0003` | Request a collection manifest |
+| `MANIFEST` | `0x0004` | Return a collection manifest |
+| `GET_PEERS` | `0x0005` | Request peers for a collection |
+| `PEERS` | `0x0006` | Return peers for a collection |
+| `HEALTH_PROBE` | `0x0007` | Verify a peer still stores content |
+| `HEALTH_RESPONSE` | `0x0008` | Return health probe results |
+| `GOODBYE` | `0x0009` | Graceful disconnect |
+| `ERROR` | `0x00FF` | Structured error response |
+
+The Python implementation also includes membership and administrative flows such as `INVITE`, `JOIN`, `LEAVE`, `REVOKE`, `GET_MEMBERS`, and `MEMBERS`.
+
+## DCPP Architecture Diagrams
+
+### Module Dependencies + Feature Boundaries
+
+```mermaid
+flowchart TD
+    subgraph Core["Core Modules (always available)"]
+        Constants["core.constants"]
+        Framing["core.framing"]
+        Messages["core.messages"]
+        Validation["core.validation"]
+        Signing["crypto.signing"]
+        CID["crypto.cid"]
+        Manifest["manifest"]
+        Storage["storage"]
+        State["state.machine"]
+    end
+
+    subgraph Libp2pFeature["Optional Extra: p2p"]
+        Libp2p["network.libp2p.real"]
+        DHT["network.dht.kademlia"]
+        Gossip["GossipSub / DHT topics"]
+    end
+
+    subgraph BitTorrentFeature["Optional Extra: bittorrent"]
+        Torrent["network.bittorrent.real"]
+    end
+
+    subgraph DiscoveryFeature["Optional Extra: discovery"]
+        Bootstrap["network.dht.bootstrap_discovery"]
+        HttpAPI["node.daemon HTTP API"]
+    end
+
+    Messages --> Signing
+    Messages --> Manifest
+    Manifest --> CID
+    Storage --> CID
+    State --> Messages
+    State --> Manifest
+    State --> Storage
+
+    Libp2p --> Framing
+    Libp2p --> Messages
+    Libp2p --> DHT
+    DHT --> Gossip
+
+    Torrent --> Storage
+    Torrent --> Manifest
+
+    Bootstrap --> DHT
+    HttpAPI --> State
+    HttpAPI --> Storage
+```
+
+### Message Handling Data Flow
+
+```mermaid
+flowchart LR
+    Net["Network I/O (libp2p or TCP)"] --> FrameIn["Profile1 decode"]
+    FrameIn --> MsgDecode["Message decode"]
+    MsgDecode --> Verify["Signature + validation"]
+    Verify --> StateUpdate["State machine update"]
+    StateUpdate --> StorageOps["Manifest + storage operations"]
+    StorageOps --> Response["CBOR encode + Profile1 frame"]
+    Response --> NetOut["Network I/O"]
+
+    Verify --> DHTOps["DHT / peer discovery (optional)"]
+    StorageOps --> BitTorrent["BitTorrent transfer path (optional)"]
+    StateUpdate --> HttpAPI["Health / status API"]
+```
+
+## HTTP API
+
+When the daemon HTTP API is enabled, it exposes lightweight operational endpoints:
+
+- `GET /health`
+- `GET /health/detailed`
+- `GET /api/v1/collections/{collection_id}/status`
+
+The HTTP API is intended for health checks and collection status inspection rather than a full management plane.
+
+## Project Layout
+
+```text
 dcpp-python/
-├── src/
-│   └── dcpp_python/
-│       ├── __init__.py
-│       ├── core/
-│       │   ├── constants.py
-│       │   ├── framing.py
-│       │   ├── messages.py
-│       │   ├── uci.py
-│       │   └── validation.py
-│       ├── crypto/
-│       │   ├── signing.py
-│       │   ├── cid.py
-│       │   └── peer_id.py
-│       ├── network/
-│       │   ├── dht/
-│       │   ├── libp2p/
-│       │   └── bittorrent/
-│       ├── storage/
-│       │   └── backend.py
-│       ├── manifest/
-│       │   ├── manifest.py
-│       │   └── verify.py
-│       ├── state/
-│       │   └── machine.py
-│       └── node/
-│           ├── client.py
-│           └── daemon.py
-├── tests/
-│   ├── fixtures/
-│   │   └── test_vectors.json   # Generated test vectors
-│   ├── unit/                   # Unit tests
-│   ├── integration/            # Integration tests
-│   └── e2e/                    # End-to-end tests
+├── src/dcpp_python/
+│   ├── core/
+│   ├── crypto/
+│   ├── manifest/
+│   ├── network/
+│   │   ├── bittorrent/
+│   │   ├── dht/
+│   │   └── libp2p/
+│   ├── node/
+│   ├── state/
+│   └── storage/
 ├── examples/
-│   ├── hello_node.py
-│   ├── collection_guardian.py
-│   ├── manifest_creation.py
-│   ├── health_probing.py
-│   └── custom_storage.py
+├── docs/
 ├── pyproject.toml
 └── README.md
 ```
 
-## Architecture Overview
+## Troubleshooting
 
-```mermaid
-flowchart LR
-    CLIENT[Client CLI] --> FRAMING[Framing]
-    DAEMON[Daemon] --> FRAMING
-    FRAMING --> MESSAGES[Message Types]
-    MESSAGES --> VALIDATION[Validation]
-    DAEMON --> STORAGE[Storage Backends]
-    DAEMON --> DHT[DHT Discovery]
-    DAEMON --> BT[BitTorrent]
-    DAEMON --> LIBP2P[libp2p]
+### `py-libp2p` Installation Fails
+
+```bash
+pip install --upgrade pip setuptools wheel cython
+
+# Ubuntu / Debian
+sudo apt-get install build-essential libssl-dev libffi-dev python3-dev
+
+# macOS
+xcode-select --install
+brew install openssl
 ```
 
-## Dependency Diagram
+### BitTorrent Support Is Missing
 
-```mermaid
-flowchart TB
-    subgraph DCPP["dcpp Python Package"]
-        direction TB
-        CORE[Core Protocol]
-        STORAGE[Storage Backend]
-        DHT[DHT Discovery]
-        LIBP2P_MOD[libp2p Integration]
-        BT[BitTorrent Backend]
-    end
-
-    subgraph REQUIRED["Required Dependencies"]
-        cbor2["cbor2 >=5.4.0<br/>CBOR serialization"]
-        cryptography["cryptography >=41.0.0<br/>Crypto primitives"]
-        pynacl["pynacl >=1.5.0<br/>Ed25519 signatures"]
-    end
-
-    subgraph DEV["Dev Dependencies"]
-        pytest["pytest >=7.0.0"]
-        pytest_cov["pytest-cov >=4.0.0"]
-        pytest_asyncio["pytest-asyncio >=0.23.0"]
-    end
-
-    subgraph OPTIONAL["Optional Dependencies"]
-        torf["torf >=4.0.0<br/>BEP 52 torrents"]
-        libp2p["libp2p<br/>P2P networking"]
-    end
-
-    subgraph LIBP2P_DEPS["libp2p Sub-dependencies"]
-        multiaddr["multiaddr"]
-        base58["base58"]
-        protobuf["protobuf"]
-    end
-
-    CORE --> cbor2
-    CORE --> cryptography
-    CORE --> pynacl
-    STORAGE --> CORE
-    DHT --> CORE
-    DHT -.->|"Real Kademlia"| libp2p
-    LIBP2P_MOD --> CORE
-    LIBP2P_MOD -.->|"Real P2P"| libp2p
-    BT --> CORE
-    BT -.->|"BEP 52 compliant"| torf
-    libp2p --> multiaddr
-    libp2p --> base58
-    libp2p --> protobuf
-    pytest_cov --> pytest
-    pytest_asyncio --> pytest
-
-    classDef required fill:#c8e6c9,stroke:#2e7d32
-    classDef optional fill:#fff3e0,stroke:#ef6c00
-    classDef dev fill:#e3f2fd,stroke:#1565c0
-    classDef module fill:#f3e5f5,stroke:#7b1fa2
-
-    class cbor2,cryptography,pynacl required
-    class torf,libp2p,multiaddr,base58,protobuf optional
-    class pytest,pytest_cov,pytest_asyncio dev
-    class CORE,STORAGE,DHT,LIBP2P_MOD,BT module
+```bash
+pip install -e ".[bittorrent]"
+python3 -c "import torf; print(torf.__version__)"
 ```
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [API Index](docs/index.md)
+- [Protocol Specification](docs/DCPP-RFC-Wire-Protocol.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
